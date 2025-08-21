@@ -1,5 +1,5 @@
 class ModalRegistration {
-  // ========== Locators ==========
+  // Locators
   // Inputs
   get firstInput() {
     return cy.get('input#signupName');
@@ -76,7 +76,7 @@ class ModalRegistration {
     return cy.contains('Passwords do not match');
   }
 
-  // ========== Actions ==========
+  // Actions
   open() {
     cy.get('button.hero-descriptor_btn.btn.btn-primary').click();
     return this;
