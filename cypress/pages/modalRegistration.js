@@ -1,5 +1,6 @@
 class ModalRegistration {
   // Locators
+  
   // Inputs
   get firstInput() {
     return cy.get('input#signupName');

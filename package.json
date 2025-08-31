@@ -1,15 +1,19 @@
 {
   "name": "test-project",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "cy:open": "npx cypress open"
-  },
-  "author": "",
-  "license": "ISC",
-  "dependencies": {
-    "cypress": "^14.5.4"
+  "cy:open": "npx cypress open",
+  "test:qauto": "cypress run --config-file cypress.config.qauto.js",
+  "test:qauto2": "cypress run --config-file cypress.config.qauto2.js",
+  "report:merge": "npx mochawesome-merge cypress/reports/*.json > cypress/reports/mochawesome.json",
+  "report:generate": "npx marge cypress/reports/mochawesome.json --reportDir cypress/reports/html"
+},
+
+  "devDependencies": {
+    "cypress": "^15.0.0",
+    "cypress-mochawesome-reporter": "^4.0.2",
+    "mochawesome": "^7.1.3",
+    "mochawesome-merge": "^5.0.0",
+    "mochawesome-report-generator": "^6.2.0"
   }
 }
