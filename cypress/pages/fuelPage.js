@@ -87,3 +87,5 @@ class FuelPage {
 }
 
 export default new FuelPage();
+
+
