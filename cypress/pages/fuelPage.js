@@ -46,16 +46,21 @@ class FuelPage {
     return this;
   }
 
-  chooseSelectCar(carName) {
+chooseSelectCar(carName) {
   if (carName) {
-    this.selectAddedCar.select(carName);
+    this.selectAddedCar
+      .find('option')
+      .contains(carName)
+      .first()  // вибрати перший збіг
+      .then(($option) => {
+        this.selectAddedCar.select($option.val());
+      });
   } else {
     this.selectAddedCar
       .find('option')
       .eq(0)
-      .invoke('val')
-      .then(value => {
-        this.selectAddedCar.select(value);
+      .then(($option) => {
+        this.selectAddedCar.select($option.val());
       });
   }
   return this;
@@ -87,3 +92,5 @@ class FuelPage {
 }
 
 export default new FuelPage();
+
+
