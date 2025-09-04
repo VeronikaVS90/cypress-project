@@ -25,3 +25,6 @@ Cypress.Commands.add('createExpense', (carId, mileage, liters, totalCost, date =
 });
 
 
+
+
+
