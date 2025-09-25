@@ -1,4 +1,4 @@
-name: Cypress E2E in Docker (browsers image)
+name: Cypress E2E in Docker (qauto only)
 
 on:
   push:
@@ -48,37 +48,19 @@ jobs:
       - name: Verify Cypress binary
         run: npx cypress verify
 
-      - name: Run Cypress tests (qauto / qauto2 / default)
+      - name: Run Cypress (qauto)
         shell: bash
         run: |
           set -euxo pipefail
-          # Якщо є BASE_URL, прокинемо її в cypress через --config
+          [[ -f "cypress.config.qauto.js" ]] || { echo "cypress.config.qauto.js not found"; exit 1; }
           CFG_ARG=""
           if [[ -n "${BASE_URL:-}" ]]; then
             CFG_ARG="--config baseUrl=${BASE_URL}"
           fi
-
-          ran_any=""
-          if [[ -f "cypress.config.qauto.js" ]]; then
-            echo "Running: npm run test:qauto"
-            npm run test:qauto -- ${CFG_ARG}
-            ran_any="yes"
-          fi
-
-          if [[ -f "cypress.config.qauto2.js" ]]; then
-            echo "Running: npm run test:qauto2"
-            npm run test:qauto2 -- ${CFG_ARG}
-            ran_any="yes"
-          fi
-
-          if [[ -z "$ran_any" ]]; then
-            echo "No qauto configs found; running default cypress config"
-            npx cypress run ${CFG_ARG}
-          fi
+          npm run test:qauto -- ${CFG_ARG}
 
       - name: Merge mochawesome JSON
         run: npm run report:merge
-
         continue-on-error: true
 
       - name: Generate mochawesome HTML
@@ -128,6 +110,4 @@ jobs:
             echo "- Videos: cypress-videos"
             echo "- Screenshots (only on failure): cypress-screenshots"
             echo "- Mochawesome HTML: mochawesome-report-html"
-            echo ""
-            echo "Attach a screenshot of this green run to the PR description."
           } >> "$GITHUB_STEP_SUMMARY"
