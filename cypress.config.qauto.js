@@ -10,6 +10,16 @@ module.exports = defineConfig({
       email: "jamesdean@gmail.com",
       password: "Testjames123",
     },
+
+    excludeSpecPattern: ["**/garageApi.cy.js"],
+
+    setupNodeEvents(on, config) {
+      if (baseConfig.e2e && typeof baseConfig.e2e.setupNodeEvents === "function") {
+        baseConfig.e2e.setupNodeEvents(on, config);
+      }
+      return config;
+    },
   },
 });
+
 

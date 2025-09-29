@@ -1,0 +1,113 @@
+name: Cypress E2E in Docker (qauto only)
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: cypress-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cypress:
+    runs-on: ubuntu-22.04
+
+    container:
+      image: cypress/browsers:node-20.9.0-chrome-118.0.5993.88-1-ff-118.0.2-edge-118.0.2088.46-1
+      options: --ipc=host
+
+    env:
+      CYPRESS_CACHE_FOLDER: ~/.cache/Cypress
+      NODE_OPTIONS: --max_old_space_size=4096
+
+      BASE_URL: ${{ vars.APP_URL }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show Node & npm (from container)
+        run: node -v && npm -v
+
+      - name: Cache node_modules & Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: |
+            **/node_modules
+            ~/.cache/Cypress
+          key: ${{ runner.os }}-npm-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-npm-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify Cypress binary
+        run: npx cypress verify
+
+      - name: Run Cypress (qauto)
+        shell: bash
+        run: |
+          set -euxo pipefail
+          [[ -f "cypress.config.qauto.js" ]] || { echo "cypress.config.qauto.js not found"; exit 1; }
+          CFG_ARG=""
+          if [[ -n "${BASE_URL:-}" ]]; then
+            CFG_ARG="--config baseUrl=${BASE_URL}"
+          fi
+          npm run test:qauto -- ${CFG_ARG}
+
+      - name: Merge mochawesome JSON
+        run: npm run report:merge
+        continue-on-error: true
+
+      - name: Generate mochawesome HTML
+        run: npm run report:generate
+        continue-on-error: true
+
+      - name: Upload Cypress screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-screenshots
+          path: cypress/screenshots
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload Cypress videos (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cypress-videos
+          path: cypress/videos
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Upload mochawesome HTML report (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report-html
+          path: cypress/reports/html
+          if-no-files-found: ignore
+          retention-days: 7
+
+      - name: Post summary
+        if: always()
+        run: |
+          {
+            echo "## Cypress run summary"
+            echo ""
+            echo "- Job status: **${{ job.status }}**"
+            echo "- Container image: \`cypress/browsers:node-20.9.0-...\`"
+            if [[ -n "${BASE_URL:-}" ]]; then
+              echo "- baseUrl: \`${BASE_URL}\`"
+            fi
+            echo ""
+            echo "### Artifacts"
+            echo "- Videos: cypress-videos"
+            echo "- Screenshots (only on failure): cypress-screenshots"
+            echo "- Mochawesome HTML: mochawesome-report-html"
+          } >> "$GITHUB_STEP_SUMMARY"
